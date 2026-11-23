@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetAssist – Network Troubleshooting & Diagnostic Assistant</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.55a11 11 0 0 1 14.08 0'/><path d='M1.42 9a16 16 0 0 1 21.16 0'/><path d='M8.53 16.11a6 6 0 0 1 6.95 0'/><line x1='12' y1='20' x2='12.01' y2='20'/></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="brand" onclick="navigateTo('dashboard')">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">Net<span>Assist</span></div>
+          <div class="brand-subtitle">Network Troubleshooting & Automated Diagnostic Assistant</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <!-- Live link status badge -->
+        <div id="nav-status-badge" class="status-pill running">
+          <span class="dot pulse"></span>
+          <span id="nav-status-text">Probing Link...</span>
+        </div>
+
+        <button class="btn btn-secondary" onclick="refreshGlobalTelemetry()" title="Refresh telemetry">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span class="hidden-mobile">Refresh</span>
+        </button>
+
+        <button class="btn btn-primary" onclick="navigateTo('troubleshooting'); runAutoDiagnosis();">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Run Auto Diagnosis</span>
+        </button>
+
+        <!-- User profile -->
+        <div style="display:flex; align-items:center; gap:8px; border-left:1px solid var(--border-dark); padding-left:12px;">
+          <div style="text-align:right;">
+            <div style="font-size:12px; font-weight:700; color:#fff;" id="nav-username">admin</div>
+            <div style="font-size:10px; color:var(--accent-cyan);">Network Engineer</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div>
+          <div class="sidebar-heading">Core Modules</div>
+          <ul class="nav-list">
+            <li class="nav-item active" id="nav-item-dashboard" onclick="navigateTo('dashboard')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Dashboard</span>
+              </div>
+            </li>
+
+            <li class="nav-item" id="nav-item-diagnostics" onclick="navigateTo('diagnostics')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+                <span>Network Diagnostics</span>
+              </div>
+              <span class="badge-tag cn">CN</span>
+            </li>
+
+            <li class="nav-item" id="nav-item-troubleshooting" onclick="navigateTo('troubleshooting')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>Automated Troubleshooting</span>
+              </div>
+              <span class="badge-tag auto">Auto</span>
+            </li>
+
+            <li class="nav-item" id="nav-item-automata" onclick="navigateTo('automata')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+                <span>FLAT – DFA Simulator</span>
+              </div>
+              <span class="badge-tag flat">FLAT</span>
+            </li>
+
+            <li class="nav-item" id="nav-item-performance" onclick="navigateTo('performance')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                <span>Performance Analyzer</span>
+              </div>
+            </li>
+
+            <li class="nav-item" id="nav-item-history" onclick="navigateTo('history')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Diagnostic History</span>
+              </div>
+            </li>
+
+            <li class="nav-item" id="nav-item-reports" onclick="navigateTo('reports')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Reports & Export</span>
+              </div>
+            </li>
+
+            <li class="nav-item" id="nav-item-about" onclick="navigateTo('about')">
+              <div class="nav-item-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Academic Concepts</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Academic Integration Card -->
+        <div class="sidebar-footer-card">
+          <div style="font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+            <span style="color:var(--accent-cyan);">◆</span> Three-Pillar Academic Core
+          </div>
+          <div style="color:var(--text-muted); font-size:10px; margin-top:4px; line-height:1.4;">
+            1. Computer Networks (L1-L7)<br>
+            2. FLAT (5-Tuple DFA M & RegEx)<br>
+            3. Full Stack Web Development
+          </div>
+          <div style="margin-top:8px; padding-top:6px; border-top:1px solid var(--border-dark); font-size:10px; color:var(--text-dim); display:flex; justify-content:space-between;">
+            <span>FastAPI + SQLite</span>
+            <span style="color:var(--status-emerald);">● Online</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Page View Container -->
+      <main class="content-view" id="page-content">
+        <!-- Rendered dynamically by app.js -->
+      </main>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modal-root"></div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
