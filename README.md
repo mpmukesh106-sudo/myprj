@@ -231,7 +231,7 @@ Open your browser to:
 
 ## Vercel Deployment
 
-The root `vercel.json` builds the React frontend, and FastAPI serves its assets and API. Configure these environment variables in the Vercel project before deploying:
+The root `vercel.json` deploys the Vite frontend and FastAPI backend as separate Vercel services, routing the frontend at `/` and the API at `/api`. Configure these environment variables in the Vercel project before deploying:
 
 - `DATABASE_URL` (or `POSTGRES_URL`): a persistent PostgreSQL connection string.
 - `NETASSIST_ADMIN_USERNAME`: the deployment administrator username.
