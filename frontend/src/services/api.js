@@ -7,16 +7,23 @@ const API_BASE = '/api';
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const token = sessionStorage.getItem('netassist_token');
   const config = {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-    ...options,
   };
 
   try {
     const res = await fetch(url, config);
+    if (res.status === 401 && endpoint !== '/auth/login') {
+      sessionStorage.removeItem('netassist_token');
+      sessionStorage.removeItem('netassist_user');
+      window.location.assign('/login');
+    }
     if (!res.ok) {
       let errMsg = `Request failed with status ${res.status}`;
       try {
@@ -101,11 +108,42 @@ export const api = {
   getCsvExportUrl: () => `${API_BASE}/reports/export/csv`,
 
   // 7. Auth
-  login: (username, password) =>
-    request('/auth/login', {
+  login: async (username, password) => {
+    const result = await request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
-    }),
+    });
+    sessionStorage.setItem('netassist_token', result.token);
+    return result;
+  },
+  downloadFile: async (endpoint) => {
+    const token = sessionStorage.getItem('netassist_token');
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (response.status === 401) {
+      sessionStorage.removeItem('netassist_token');
+      sessionStorage.removeItem('netassist_user');
+      window.location.assign('/login');
+      throw new Error('Your session expired. Please sign in again.');
+    }
+    if (!response.ok) {
+      throw new Error(`Download failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const fileName = response.headers
+      .get('content-disposition')
+      ?.match(/filename="?([^";]+)"?/i)?.[1] || 'netassist-export';
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  },
 };
 
 export default api;

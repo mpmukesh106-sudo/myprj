@@ -8,6 +8,7 @@ import os
 
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ["NETASSIST_REQUIRE_AUTH"] = "1"
 
 from starlette.testclient import TestClient
 from app import app
@@ -31,6 +32,15 @@ def run_all_tests():
             print(f"  [PASS] {name}")
         else:
             print(f"  [FAIL] {name} - {details}")
+
+    unauthenticated = client.get("/api/dashboard")
+    test_case("Protected API rejects unauthenticated requests", unauthenticated.status_code == 401)
+    invalid_token = client.get("/api/dashboard", headers={"Authorization": "Bearer invalid"})
+    test_case("Protected API rejects invalid tokens", invalid_token.status_code == 401)
+    login_response = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    test_case("User Authentication (admin / admin123)", login_response.status_code == 200 and "token" in login_response.json())
+    if login_response.status_code == 200:
+        client.headers.update({"Authorization": f"Bearer {login_response.json()['token']}"})
             
     # 1. Health check
     res = client.get("/api/health")
@@ -39,6 +49,8 @@ def run_all_tests():
     # 2. Frontend HTML index served
     res = client.get("/")
     test_case("Frontend Static Index Served", res.status_code == 200 and "NetAssist" in res.text)
+    res = client.get("/reports", headers={"Accept": "text/html"})
+    test_case("Frontend client-side routes are served", res.status_code == 200 and "NetAssist" in res.text)
     
     # 3. Dashboard endpoint
     res = client.get("/api/dashboard")
@@ -94,10 +106,6 @@ def run_all_tests():
     # 15. CSV Export
     res = client.get("/api/reports/export/csv")
     test_case("CSV Telemetry Export", res.status_code == 200 and "text/csv" in res.headers.get("content-type"))
-    
-    # 16. Authentication / Login
-    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
-    test_case("User Authentication (admin / admin123)", res.status_code == 200 and "token" in res.json())
     
     print("=" * 60)
     print(f"  TEST RESULTS: {passed} / {total} PASSED (100% Success Rate)")

@@ -438,7 +438,7 @@ export default function DFASimulator() {
             </table>
           </div>
           <p className="mt-2 text-[10px] text-slate-500 font-sans">
-            * denotes accepting states ($F = \{q_1, q_2, q_3, q_4\}$); &rarr; denotes initial state $q_0$.
+            * denotes accepting states ($F = &#123;q_1, q_2, q_3, q_4&#125;$); &rarr; denotes initial state $q_0$.
           </p>
         </div>
 

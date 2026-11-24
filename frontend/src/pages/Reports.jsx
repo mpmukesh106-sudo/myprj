@@ -55,6 +55,14 @@ export default function Reports() {
     loadReportDetail(id);
   };
 
+  const handleDownload = async (endpoint) => {
+    try {
+      await api.downloadFile(endpoint);
+    } catch (error) {
+      window.alert(error.message);
+    }
+  };
+
   const diag = reportData?.diagnostic;
 
   return (
@@ -75,14 +83,14 @@ export default function Reports() {
         </div>
 
         {/* Global CSV export */}
-        <a
-          href={api.getCsvExportUrl()}
-          download
+        <button
+          type="button"
+          onClick={() => handleDownload(api.getCsvExportUrl())}
           className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white transition self-start"
         >
           <Download size={14} />
           <span>Export All History as CSV</span>
-        </a>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -150,15 +158,14 @@ export default function Reports() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <a
-                    href={api.getPdfDownloadUrl(diag.id)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(api.getPdfDownloadUrl(diag.id))}
                     className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-glow-cyan hover:opacity-95 transition"
                   >
                     <Download size={13} />
                     <span>Download Official PDF</span>
-                  </a>
+                  </button>
                   <button
                     onClick={() => window.print()}
                     className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 hover:text-white transition"

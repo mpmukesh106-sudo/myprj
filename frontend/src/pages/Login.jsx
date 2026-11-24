@@ -5,8 +5,8 @@ import api from '../services/api';
 
 export default function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -25,16 +25,6 @@ export default function Login({ onLoginSuccess }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickDemo = () => {
-    onLoginSuccess({
-      id: 1,
-      username: 'admin',
-      email: 'admin@netassist.local',
-      role: 'Lead Network Engineer',
-    });
-    navigate('/');
   };
 
   return (
@@ -80,7 +70,7 @@ export default function Login({ onLoginSuccess }) {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono"
-                placeholder="admin"
+                placeholder="Username"
               />
             </div>
           </div>
@@ -97,7 +87,7 @@ export default function Login({ onLoginSuccess }) {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-700 bg-slate-900/80 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono"
-                placeholder="••••••••"
+                placeholder="Password"
               />
             </div>
           </div>
@@ -111,17 +101,6 @@ export default function Login({ onLoginSuccess }) {
             <ArrowRight size={16} />
           </button>
         </form>
-
-        {/* Quick Demo Access Button */}
-        <div className="mt-5 border-t border-slate-800 pt-4 text-center">
-          <p className="text-[11px] text-slate-400">Academic Evaluation Shortcut:</p>
-          <button
-            onClick={handleQuickDemo}
-            className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800/80 py-2 text-xs font-medium text-cyan-300 hover:bg-slate-800 hover:border-cyan-500/40 transition"
-          >
-            Launch Instant Demo Session (Admin)
-          </button>
-        </div>
 
         {/* Feature Badges */}
         <div className="mt-6 grid grid-cols-3 gap-2 border-t border-slate-800/80 pt-4 text-center text-[10px] text-slate-400">

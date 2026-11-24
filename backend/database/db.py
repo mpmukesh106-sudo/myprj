@@ -5,10 +5,46 @@ import hashlib
 from datetime import datetime, timedelta
 import random
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "netassist.db")
+DB_PATH = os.environ.get(
+    "NETASSIST_DB_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "netassist.db")
+)
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
+POSTGRES_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "postgres_schema.sql")
+
+
+class _PostgresCursor:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def execute(self, query, parameters=()):
+        return self._cursor.execute(query.replace("?", "%s"), parameters)
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
+
+
+class _PostgresConnection:
+    def __init__(self, connection):
+        self._connection = connection
+
+    def cursor(self):
+        return _PostgresCursor(self._connection.cursor())
+
+    def __getattr__(self, name):
+        return getattr(self._connection, name)
+
 
 def get_connection():
+    database_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+    if database_url:
+        import psycopg
+        from psycopg.rows import dict_row
+
+        return _PostgresConnection(psycopg.connect(database_url, row_factory=dict_row))
+    if os.environ.get("VERCEL"):
+        raise RuntimeError("Configure DATABASE_URL or POSTGRES_URL with a persistent PostgreSQL database")
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -18,35 +54,42 @@ def hash_password(password: str) -> str:
 
 def init_db():
     conn = get_connection()
-    with open(SCHEMA_PATH, "r") as f:
-        conn.executescript(f.read())
-    conn.commit()
-    
-    # Check if seed user exists
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) as count FROM users")
-    if cursor.fetchone()["count"] == 0:
-        cursor.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            ("admin", "admin@netassist.local", hash_password("admin123"))
-        )
-        cursor.execute(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            ("network_engineer", "engineer@netassist.local", hash_password("netpass123"))
-        )
-    
-    # Check if seed diagnostics exist
-    cursor.execute("SELECT COUNT(*) as count FROM diagnostics")
-    if cursor.fetchone()["count"] == 0:
-        seed_sample_diagnostics(conn)
-        
-    # Check if seed automata logs exist
-    cursor.execute("SELECT COUNT(*) as count FROM automata_logs")
-    if cursor.fetchone()["count"] == 0:
-        seed_automata_logs(conn)
-        
-    conn.commit()
-    conn.close()
+    try:
+        is_postgres = isinstance(conn, _PostgresConnection)
+        if is_postgres:
+            with open(POSTGRES_SCHEMA_PATH, "r", encoding="utf-8") as schema_file:
+                for statement in schema_file.read().split(";"):
+                    if statement.strip():
+                        conn.cursor().execute(statement)
+        else:
+            with open(SCHEMA_PATH, "r", encoding="utf-8") as schema_file:
+                conn.executescript(schema_file.read())
+        conn.commit()
+
+        cursor = conn.cursor()
+        if not is_postgres:
+            cursor.execute("SELECT COUNT(*) as count FROM users")
+            if cursor.fetchone()["count"] == 0:
+                cursor.execute(
+                    "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                    ("admin", "admin@netassist.local", hash_password("admin123"))
+                )
+                cursor.execute(
+                    "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                    ("network_engineer", "engineer@netassist.local", hash_password("netpass123"))
+                )
+
+        cursor.execute("SELECT COUNT(*) as count FROM diagnostics")
+        if cursor.fetchone()["count"] == 0:
+            seed_sample_diagnostics(conn)
+
+        cursor.execute("SELECT COUNT(*) as count FROM automata_logs")
+        if cursor.fetchone()["count"] == 0:
+            seed_automata_logs(conn)
+
+        conn.commit()
+    finally:
+        conn.close()
 
 def seed_sample_diagnostics(conn):
     sample_tests = [
@@ -67,7 +110,7 @@ def seed_sample_diagnostics(conn):
     cursor = conn.cursor()
     now = datetime.now()
     for idx, (ttype, target, status, lat, loss, err, details) in enumerate(sample_tests):
-        ts = (now - timedelta(minutes=(len(sample_tests) - idx) * 15)).strftime("%Y-%m-%d %H:%M:%S")
+        ts = now - timedelta(minutes=(len(sample_tests) - idx) * 15)
         cursor.execute(
             """INSERT INTO diagnostics 
                (test_type, target, status, latency, packet_loss, error_message, details_json, timestamp) 
@@ -86,7 +129,7 @@ def seed_automata_logs(conn):
     cursor = conn.cursor()
     now = datetime.now()
     for idx, (inp, pat, fstate, acc, trans) in enumerate(logs):
-        ts = (now - timedelta(minutes=(len(logs) - idx) * 20)).strftime("%Y-%m-%d %H:%M:%S")
+        ts = now - timedelta(minutes=(len(logs) - idx) * 20)
         cursor.execute(
             """INSERT INTO automata_logs 
                (input_string, recognized_pattern, final_state, accepted, transitions_json, timestamp) 
@@ -98,13 +141,21 @@ def seed_automata_logs(conn):
 def add_diagnostic(test_type: str, target: str, status: str, latency: float, packet_loss: float, error_message: str = None, details: dict = None) -> int:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """INSERT INTO diagnostics 
-           (test_type, target, status, latency, packet_loss, error_message, details_json) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (test_type, target, status, latency, packet_loss, error_message, json.dumps(details) if details else None)
-    )
-    new_id = cursor.lastrowid
+    query = """INSERT INTO diagnostics
+               (test_type, target, status, latency, packet_loss, error_message, details_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?)"""
+    if isinstance(conn, _PostgresConnection):
+        cursor.execute(
+            query + " RETURNING id",
+            (test_type, target, status, latency, packet_loss, error_message, json.dumps(details) if details else None)
+        )
+        new_id = cursor.fetchone()["id"]
+    else:
+        cursor.execute(
+            query,
+            (test_type, target, status, latency, packet_loss, error_message, json.dumps(details) if details else None)
+        )
+        new_id = cursor.lastrowid
     conn.commit()
     conn.close()
     return new_id
@@ -230,13 +281,21 @@ def get_dashboard_stats():
 def add_automata_log(input_string: str, recognized_pattern: str, final_state: str, accepted: bool, transitions: list) -> int:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        """INSERT INTO automata_logs 
-           (input_string, recognized_pattern, final_state, accepted, transitions_json) 
-           VALUES (?, ?, ?, ?, ?)""",
-        (input_string, recognized_pattern, final_state, 1 if accepted else 0, json.dumps(transitions))
-    )
-    new_id = cursor.lastrowid
+    query = """INSERT INTO automata_logs
+               (input_string, recognized_pattern, final_state, accepted, transitions_json)
+               VALUES (?, ?, ?, ?, ?)"""
+    if isinstance(conn, _PostgresConnection):
+        cursor.execute(
+            query + " RETURNING id",
+            (input_string, recognized_pattern, final_state, 1 if accepted else 0, json.dumps(transitions))
+        )
+        new_id = cursor.fetchone()["id"]
+    else:
+        cursor.execute(
+            query,
+            (input_string, recognized_pattern, final_state, 1 if accepted else 0, json.dumps(transitions))
+        )
+        new_id = cursor.lastrowid
     conn.commit()
     conn.close()
     return new_id

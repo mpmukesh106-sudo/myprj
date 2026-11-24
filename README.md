@@ -227,12 +227,24 @@ Open your browser to:
 **Default Admin Credentials:**
 - **Username:** `admin`
 - **Password:** `admin123`
+- These demo credentials are for local development only.
+
+## Vercel Deployment
+
+The root `vercel.json` builds the React frontend, and FastAPI serves its assets and API. Configure these environment variables in the Vercel project before deploying:
+
+- `DATABASE_URL` (or `POSTGRES_URL`): a persistent PostgreSQL connection string.
+- `NETASSIST_ADMIN_USERNAME`: the deployment administrator username.
+- `NETASSIST_ADMIN_PASSWORD`: a strong administrator password.
+- `NETASSIST_AUTH_SECRET`: a randomly generated secret used to sign API access tokens.
+
+The Vercel backend rejects unauthenticated API requests. Do not use the local demo credentials in production. Network checks run from Vercel's serverless environment, not from a visitor's device or local network; ICMP ping and traceroute availability depends on the runtime.
 
 ---
 
 ## 9. Verification & Automated Test Suite
 
-NetAssist includes an automated integration test suite that tests all 17 critical modules:
+NetAssist includes an automated integration test suite that tests all critical modules:
 
 To execute the test suite:
 ```bash
@@ -244,8 +256,12 @@ python backend/test_app.py
 ============================================================
   RUNNING NETASSIST COMPREHENSIVE INTEGRATION TEST SUITE
 ============================================================
+  [PASS] Protected API rejects unauthenticated requests
+  [PASS] Protected API rejects invalid tokens
+  [PASS] User Authentication (admin / admin123)
   [PASS] API Health Check
   [PASS] Frontend Static Index Served
+  [PASS] Frontend client-side routes are served
   [PASS] Dashboard Telemetry API
   [PASS] Network Status & Routing API
   [PASS] ICMP Ping Execution (127.0.0.1)
@@ -260,9 +276,8 @@ python backend/test_app.py
   [PASS] SQLite Diagnostic History Retrieval
   [PASS] ReportLab PDF Report Generation
   [PASS] CSV Telemetry Export
-  [PASS] User Authentication (admin / admin123)
 ============================================================
-  TEST RESULTS: 17 / 17 PASSED (100% Success Rate)
+  TEST RESULTS: 20 / 20 PASSED (100% Success Rate)
 ============================================================
 ```
 

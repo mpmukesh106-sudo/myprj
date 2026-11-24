@@ -4,11 +4,18 @@ Main Backend Application (FastAPI + SQLite + Networking + FLAT DFA + Static Fron
 """
 
 import os
+import sys
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse
 from database.db import init_db
+from services.security import verify_access_token
 from routes import (
     dashboard_router,
     network_router,
@@ -37,7 +44,31 @@ app.add_middleware(
 # Database initialization on startup
 @app.on_event("startup")
 def on_startup():
+    if os.environ.get("VERCEL"):
+        required_settings = (
+            "DATABASE_URL",
+            "NETASSIST_ADMIN_USERNAME",
+            "NETASSIST_ADMIN_PASSWORD",
+            "NETASSIST_AUTH_SECRET",
+        )
+        missing_settings = [
+            name for name in required_settings
+            if not os.environ.get(name) and not (name == "DATABASE_URL" and os.environ.get("POSTGRES_URL"))
+        ]
+        if missing_settings:
+            raise RuntimeError(f"Missing required Vercel environment variables: {', '.join(missing_settings)}")
     init_db()
+
+@app.middleware("http")
+async def require_api_auth(request, call_next):
+    path = request.url.path
+    auth_required = os.environ.get("VERCEL") or os.environ.get("NETASSIST_REQUIRE_AUTH")
+    if auth_required and path.startswith("/api/") and path not in {"/api/health", "/api/auth/login"}:
+        authorization = request.headers.get("authorization", "")
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token or not verify_access_token(token):
+            return JSONResponse(status_code=401, content={"detail": "Authentication required"})
+    return await call_next(request)
 
 # Mount all REST API modules
 app.include_router(dashboard_router, prefix="/api", tags=["Dashboard"])
@@ -52,9 +83,13 @@ app.include_router(auth_router, prefix="/api", tags=["Authentication"])
 def health_check():
     return {"status": "ok", "service": "NetAssist Backend Engine"}
 
-# Static Frontend Mounting
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-if os.path.exists(STATIC_DIR):
+# Static frontend mounting
+STATIC_DIR = os.path.join(BACKEND_DIR, "static")
+FRONTEND_DIST = os.path.abspath(os.path.join(BACKEND_DIR, "..", "frontend", "dist"))
+
+if os.path.isdir(FRONTEND_DIST):
+    app.frontend("/", directory=FRONTEND_DIST, fallback="index.html")
+elif os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @app.get("/")

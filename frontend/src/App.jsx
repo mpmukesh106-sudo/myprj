@@ -18,10 +18,10 @@ import api from './services/api';
 
 export default function App() {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('netassist_user');
-    return saved
+    const saved = sessionStorage.getItem('netassist_user');
+    return sessionStorage.getItem('netassist_token') && saved
       ? JSON.parse(saved)
-      : { id: 1, username: 'admin', email: 'admin@netassist.local', role: 'Network Administrator' };
+      : null;
   });
 
   const [networkStatus, setNetworkStatus] = useState('ONLINE');
@@ -40,19 +40,21 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!user) return undefined;
     checkStatus();
     const interval = setInterval(checkStatus, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    localStorage.setItem('netassist_user', JSON.stringify(userData));
+    sessionStorage.setItem('netassist_user', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('netassist_user');
+    sessionStorage.removeItem('netassist_user');
+    sessionStorage.removeItem('netassist_token');
   };
 
   return (

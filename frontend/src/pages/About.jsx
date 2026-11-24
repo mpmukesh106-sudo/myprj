@@ -130,7 +130,7 @@ export default function About() {
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
               <span className="font-bold text-purple-300 block mb-1">State q1: DNS Failure</span>
               <p className="text-[11px] text-slate-400">
-                Recognizes regular language $L_1 = \{\text{DNS\_ERROR} \cdot w \mid w \in \Sigma^*\}$.
+                Recognizes regular language $L_1 = &#123;\text&#123;DNS\_ERROR&#125; \cdot w \mid w \in \Sigma^*&#125;$.
                 Correlates with Layer 7 domain resolution timeout or NXDOMAIN responses.
               </p>
             </div>
@@ -138,7 +138,7 @@ export default function About() {
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
               <span className="font-bold text-purple-300 block mb-1">State q2: Timeout</span>
               <p className="text-[11px] text-slate-400">
-                Recognizes regular language $L_2 = \{\text{TIMEOUT} \cdot w \mid w \in \Sigma^*\}$.
+                Recognizes regular language $L_2 = &#123;\text&#123;TIMEOUT&#125; \cdot w \mid w \in \Sigma^*&#125;$.
                 Transitions on dropped TCP SYN-ACK frames exceeding RTO thresholds.
               </p>
             </div>
@@ -146,7 +146,7 @@ export default function About() {
             <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-3.5">
               <span className="font-bold text-purple-300 block mb-1">State q3: Packet Loss</span>
               <p className="text-[11px] text-slate-400">
-                Recognizes regular language $L_3 = \{\text{PACKET\_LOSS} \cdot w \mid w \in \Sigma^*\}$.
+                Recognizes regular language $L_3 = &#123;\text&#123;PACKET\_LOSS&#125; \cdot w \mid w \in \Sigma^*&#125;$.
                 Classifies physical layer transmission attenuation and queue overflows.
               </p>
             </div>

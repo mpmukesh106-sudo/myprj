@@ -30,6 +30,14 @@ export default function History() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
 
+  const handleDownload = async (endpoint) => {
+    try {
+      await api.downloadFile(endpoint);
+    } catch (error) {
+      window.alert(error.message);
+    }
+  };
+
   // Detail preview modal state
   const [selectedItem, setSelectedItem] = useState(null);
 
@@ -102,14 +110,14 @@ export default function History() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* CSV Download Link */}
-          <a
-            href={api.getCsvExportUrl()}
-            download
+          <button
+            type="button"
+            onClick={() => handleDownload(api.getCsvExportUrl())}
             className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-300 hover:text-white transition"
           >
             <Download size={14} />
             <span>Export CSV</span>
-          </a>
+          </button>
 
           <button
             onClick={() => setClearAllConfirm(true)}
@@ -306,15 +314,14 @@ export default function History() {
             )}
 
             <div className="flex justify-end gap-2 border-t border-slate-800 pt-3">
-              <a
-                href={api.getPdfDownloadUrl(selectedItem.id)}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => handleDownload(api.getPdfDownloadUrl(selectedItem.id))}
                 className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-cyan-500 transition"
               >
                 <Download size={14} />
                 <span>Download PDF Report</span>
-              </a>
+              </button>
             </div>
           </div>
         )}
