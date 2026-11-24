@@ -19,6 +19,62 @@
       }
     },
     {
+      "source": "/login/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/diagnostics/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/troubleshooting/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/automata/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/performance/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/history/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/reports/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
+      "source": "/about/:path*",
+      "destination": {
+        "service": "frontend",
+        "path": "/"
+      }
+    },
+    {
       "source": "/(.*)",
       "destination": {
         "service": "frontend"
