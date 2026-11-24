@@ -8,7 +8,41 @@
     },
     "frontend": {
       "root": "frontend",
-      "framework": "vite"
+      "framework": "vite",
+      "rewrites": [
+        {
+          "source": "/login/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/diagnostics/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/troubleshooting/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/automata/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/performance/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/history/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/reports/:path*",
+          "destination": "/"
+        },
+        {
+          "source": "/about/:path*",
+          "destination": "/"
+        }
+      ]
     }
   },
   "rewrites": [
@@ -16,62 +50,6 @@
       "source": "/api/(.*)",
       "destination": {
         "service": "backend"
-      }
-    },
-    {
-      "source": "/login/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/diagnostics/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/troubleshooting/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/automata/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/performance/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/history/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/reports/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
-      }
-    },
-    {
-      "source": "/about/:path*",
-      "destination": {
-        "service": "frontend",
-        "path": "/"
       }
     },
     {
